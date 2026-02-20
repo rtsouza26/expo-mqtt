@@ -1,0 +1,19 @@
+{
+  "platforms": [
+    "apple",
+    "android",
+    "web"
+  ],
+  "apple": {
+    "modules": [
+      "ExpoMqttModule",
+      "ExpoAmqpModule"
+    ]
+  },
+  "android": {
+    "modules": [
+      "expo.modules.mqtt.ExpoMqttModule",
+      "expo.modules.mqtt.ExpoAmqpModule"
+    ]
+  }
+}

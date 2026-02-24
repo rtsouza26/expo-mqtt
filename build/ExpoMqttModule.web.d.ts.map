@@ -1,0 +1,1 @@
+{"version":3,"file":"ExpoMqttModule.web.d.ts","sourceRoot":"","sources":["../src/ExpoMqttModule.web.ts"],"names":[],"mappings":"AAAA,OAAO,EAAqB,YAAY,EAAE,MAAM,MAAM,CAAC;AAEvD,OAAO,EAAE,oBAAoB,EAAE,MAAM,kBAAkB,CAAC;AAExD,cAAM,cAAe,SAAQ,YAAY,CAAC,oBAAoB,CAAC;IAC7D,EAAE,SAAW;IACP,aAAa,CAAC,KAAK,EAAE,MAAM,GAAG,OAAO,CAAC,IAAI,CAAC;IAGjD,KAAK;CAGN;;AAED,wBAAmE"}

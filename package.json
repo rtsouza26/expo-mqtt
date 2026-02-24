@@ -1,7 +1,7 @@
 {
   "name": "expo-mqtt",
   "version": "0.1.0",
-  "description": "mqtt/tcp to expo",
+  "description": "High-performance MQTT and AMQP (RabbitMQ) client for Expo and React Native.",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "files": [
@@ -9,7 +9,8 @@
     "src",
     "android",
     "ios",
-    "expo-module.config.json"
+    "expo-module.config.json",
+    "plugin/build"
   ],
   "scripts": {
     "build": "expo-module build",
@@ -25,8 +26,13 @@
   "keywords": [
     "react-native",
     "expo",
-    "expo-mqtt",
-    "ExpoMqtt"
+    "mqtt",
+    "amqp",
+    "rabbitmq",
+    "iot",
+    "connectivity",
+    "tcp",
+    "expo-module"
   ],
   "repository": "https://github.com/rtsouza26/expo-mqtt",
   "bugs": {
@@ -35,12 +41,15 @@
   "author": "Rafael Targino <rafael.targino@tascomtecnologia.com.br> (https://github.com/rtsouza26)",
   "license": "MIT",
   "homepage": "https://github.com/rtsouza26/expo-mqtt#readme",
-  "dependencies": {},
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.1.0",
-    "expo-module-scripts": "^5.0.8",
     "expo": "^54.0.27",
-    "react-native": "0.81.5"
+    "expo-module-scripts": "^5.0.8",
+    "jest": "^29.7.0",
+    "jest-expo": "^54.0.17",
+    "react-native": "0.81.5",
+    "ts-jest": "^29.4.6"
   },
   "peerDependencies": {
     "expo": "*",

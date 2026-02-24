@@ -1,0 +1,17 @@
+{
+    "name": "expo-mqtt-plugin",
+    "version": "0.1.0",
+    "main": "build/index.js",
+    "scripts": {
+        "build": "tsc",
+        "clean": "rimraf build",
+        "watch": "tsc --watch"
+    },
+    "devDependencies": {
+        "@expo/config-plugins": "^9.0.0",
+        "typescript": "^5.3.3"
+    },
+    "peerDependencies": {
+        "expo": "*"
+    }
+}

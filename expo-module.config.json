@@ -15,5 +15,6 @@
       "expo.modules.mqtt.ExpoMqttModule",
       "expo.modules.mqtt.ExpoAmqpModule"
     ]
-  }
+  },
+  "plugin": "./plugin/build/index.js"
 }

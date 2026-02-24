@@ -1,35 +1,108 @@
 # expo-mqtt
 
-mqtt/tcp to expo
+A high-performance MQTT and AMQP (RabbitMQ) client for Expo and React Native. This library provides a unified native interface for both protocols, optimized for modern mobile applications.
 
-# API documentation
+## Features
 
-- [Documentation for the latest stable release](https://docs.expo.dev/versions/latest/sdk/mqtt/)
-- [Documentation for the main branch](https://docs.expo.dev/versions/unversioned/sdk/mqtt/)
+- 🔄 **Unified API**: Easy-to-use interfaces for both MQTT and AMQP.
+- 🚀 **Native Performance**: Built using the Expo Modules API for maximum efficiency.
+- 📱 **Cross-Platform**: Supports Android, iOS, and Web.
+- 🔔 **Event-Driven**: Full support for connection, disconnection, and message events.
 
-# Installation in managed Expo projects
+## Installation
 
-For [managed](https://docs.expo.dev/archive/managed-vs-bare/) Expo projects, please follow the installation instructions in the [API documentation for the latest stable release](#api-documentation). If you follow the link and there is no documentation available then this library is not yet usable within managed projects &mdash; it is likely to be included in an upcoming Expo SDK release.
+### Managed Expo projects
 
-# Installation in bare React Native projects
-
-For bare React Native projects, you must ensure that you have [installed and configured the `expo` package](https://docs.expo.dev/bare/installing-expo-modules/) before continuing.
-
-### Add the package to your npm dependencies
-
-```
-npm install expo-mqtt
+```bash
+npx expo install expo-mqtt
 ```
 
-### Configure for Android
+### Bare React Native projects
 
+Ensure you have [installed and configured the `expo` package](https://docs.expo.dev/bare/installing-expo-modules/) first, then run:
 
+```bash
+npx expo install expo-mqtt
+```
 
+#### Android
+No additional configuration required.
 
-### Configure for iOS
+#### iOS
+Run `npx pod-install` after installation.
 
-Run `npx pod-install` after installing the npm package.
+## Usage
 
-# Contributing
+### MQTT
 
-Contributions are very welcome! Please refer to guidelines described in the [contributing guide]( https://github.com/expo/expo#contributing).
+```typescript
+import ExpoMqtt from 'expo-mqtt';
+
+// Connect to a broker
+await ExpoMqtt.connect({
+  url: 'tcp://broker.example.com:1883',
+  clientId: 'my-mobile-app',
+  username: 'user',
+  password: 'pass'
+});
+
+// Subscribe to a topic
+await ExpoMqtt.subscribe('sensors/temperature', 1);
+
+// Listen for messages
+const subscription = ExpoMqtt.addListener('onMessage', (event) => {
+  console.log(`Received message on ${event.topic}: ${event.message}`);
+});
+
+// Publish a message
+await ExpoMqtt.publish('sensors/status', 'online');
+```
+
+### AMQP (RabbitMQ)
+
+```typescript
+import { ExpoAmqp } from 'expo-mqtt';
+
+// Connect to a server
+await ExpoAmqp.connect({
+  url: 'amqp://guest:guest@localhost:5672'
+});
+
+// Declare a queue and consume
+await ExpoAmqp.queueDeclare('logs-queue', true);
+await ExpoAmqp.consume('logs-queue');
+
+// Listen for messages
+const amqpSubscription = ExpoAmqp.addListener('onAmqpMessage', (event) => {
+  console.log(`Received AMQP message: ${event.message}`);
+});
+
+// Publish to an exchange
+await ExpoAmqp.publish('', 'logs-queue', JSON.stringify({ level: 'info', msg: 'Started' }));
+```
+
+## API Reference
+
+### MQTT Options
+| Prop | Type | Description |
+| :--- | :--- | :--- |
+| `url` | `string` | Connection URL (e.g., `tcp://...`) |
+| `clientId` | `string` | Unique client identifier |
+| `username` | `string` | Auth username |
+| `password` | `string` | Auth password |
+
+### AMQP Options
+| Prop | Type | Description |
+| :--- | :--- | :--- |
+| `url` | `string` | Connection URL (e.g., `amqp://...`) |
+| `host` | `string` | Hostname |
+| `port` | `number` | Port |
+| `virtualHost` | `string` | VHost identifier |
+
+## Contributing
+
+Contributions are very welcome! Please refer to our [contributing guide](https://github.com/rtsouza26/expo-mqtt/blob/main/CONTRIBUTING.md).
+
+## License
+
+MIT © [Rafael Targino](https://github.com/rtsouza26)

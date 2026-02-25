@@ -23,7 +23,6 @@ public class ExpoAmqpModule: Module {
         let port = options["port"] as? Int ?? 5672
         let vhost = options["virtualHost"] as? String ?? "/"
 
-        // garante que vhost começa com "/"
         let normalizedVhost = vhost.hasPrefix("/") ? vhost : "/" + vhost
         let constructedUri = "amqp://\(user):\(pass)@\(host):\(port)\(normalizedVhost)"
         self.connection = RMQConnection(uri: constructedUri, delegate: delegate)
@@ -42,17 +41,14 @@ public class ExpoAmqpModule: Module {
       self.sendEvent("onAmqpDisconnect", ["manual": true])
     }
 
-    // ✅ Usa assinatura curta: exchangeDeclare(name, type: String)
     AsyncFunction("exchangeDeclare") { (name: String, type: String, durable: Bool) in
       let exchangeType = self.exchangeType(from: type)
-      // OBS: durable está sendo ignorado aqui por compatibilidade com a API do RMQClient usada no build
       self.channel?.exchangeDeclare(name, type: exchangeType)
     }
 
-    // ✅ Corrige o método: queueDeclare (e não declareQueue)
+    // ✅ compatível: não usa queueDeclare/declareQueue
     AsyncFunction("queueDeclare") { (name: String, durable: Bool) in
-      // OBS: durable está sendo ignorado aqui por compatibilidade com a API do RMQClient usada no build
-      self.channel?.queueDeclare(name)
+      _ = self.channel?.queue(name)
     }
 
     AsyncFunction("queueBind") { (queue: String, exchange: String, routingKey: String) in

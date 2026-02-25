@@ -56,13 +56,7 @@ public class ExpoAmqpModule: Module {
     AsyncFunction("exchangeDeclare") { (name: String, type: String, durable: Bool) in
       let exchangeType = self.exchangeType(from: type)
       let options: RMQExchangeDeclareOptions = durable ? .durable : .autoDelete // Simplification
-       self.channel?
-  .exchangeDeclare(
-      name,
-      type: exchangeType,
-      durable: durable,
-      autoDelete: !durable
-  )
+       self.channel?.exchangeDeclare(name,type: exchangeType)
     }
 
     AsyncFunction("queueDeclare") { (name: String, durable: Bool) in

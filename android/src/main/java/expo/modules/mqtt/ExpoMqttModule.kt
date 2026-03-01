@@ -2,80 +2,67 @@ package expo.modules.mqtt
 
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
-import org.eclipse.paho.client.mqttv3.MqttCallback
-import org.eclipse.paho.client.mqttv3.MqttClient
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions
-import org.eclipse.paho.client.mqttv3.MqttMessage
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
-import java.util.UUID
 
 class ExpoMqttModule : Module() {
-  private var mqttClient: MqttClient? = null
+  private val rabbitService = RabbitService()
+  private val mqttService = MqttService()
 
   override fun definition() = ModuleDefinition {
     Name("ExpoMqtt")
 
-    Events("onConnect", "onDisconnect", "onMessage", "onError")
+    Events("onAmqpMessage", "onMqttMessage", "onAmqpStatus", "onMqttStatus")
 
-    AsyncFunction("connect") { options: Map<String, Any> ->
-      val brokerUrl = options["url"] as? String ?: throw Exception("URL is required")
-      val clientId = options["clientId"] as? String ?: UUID.randomUUID().toString()
-      val username = options["username"] as? String
-      val password = options["password"] as? String
-      
-      try {
-        mqttClient = MqttClient(brokerUrl, clientId, MemoryPersistence())
-        val connectOptions = MqttConnectOptions()
-        if (username != null) connectOptions.userName = username
-        if (password != null) connectOptions.password = password.toCharArray()
-        connectOptions.isCleanSession = true
-        
-        mqttClient?.setCallback(object : MqttCallback {
-          override fun connectionLost(cause: Throwable?) {
-            sendEvent("onDisconnect", mapOf("cause" to cause?.message))
-          }
+    OnCreate {
+      rabbitService.onMessageReceived = { queue, message ->
+        sendEvent("onAmqpMessage", mapOf("queue" to queue, "message" to message))
+      }
+      rabbitService.onStatusChanged = { status ->
+        sendEvent("onAmqpStatus", mapOf("status" to status))
+      }
 
-          override fun messageArrived(topic: String?, message: MqttMessage?) {
-            sendEvent("onMessage", mapOf(
-              "topic" to topic,
-              "message" to message?.toString()
-            ))
-          }
-
-          override fun deliveryComplete(token: IMqttDeliveryToken?) {
-            // Not used for now
-          }
-        })
-
-        mqttClient?.connect(connectOptions)
-        sendEvent("onConnect", mapOf("success" to true))
-      } catch (e: Exception) {
-        sendEvent("onError", mapOf("error" to e.message))
-        throw e
+      mqttService.onMessageReceived = { topic, message ->
+        sendEvent("onMqttMessage", mapOf("topic" to topic, "message" to message))
+      }
+      mqttService.onStatusChanged = { status ->
+        sendEvent("onMqttStatus", mapOf("status" to status))
       }
     }
 
-    AsyncFunction("disconnect") {
-      try {
-        mqttClient?.disconnect()
-        sendEvent("onDisconnect", mapOf("manual" to true))
-      } catch (e: Exception) {
-        throw e
-      }
+    // AMQP Functions
+    AsyncFunction("amqpConnect") { url: String -> rabbitService.connect(url) }
+
+    AsyncFunction("amqpDisconnect") { rabbitService.disconnect() }
+
+    AsyncFunction("amqpPublish") {
+            exchange: String,
+            routingKey: String,
+            message: String,
+            type: String? ->
+      rabbitService.publish(exchange, routingKey, message, type ?: "direct")
     }
 
-    AsyncFunction("subscribe") { topic: String, qos: Int ->
-      mqttClient?.subscribe(topic, qos)
+    AsyncFunction("amqpDeclareExchange") { name: String, type: String ->
+      rabbitService.declareExchange(name, type)
     }
 
-    AsyncFunction("unsubscribe") { topic: String ->
-      mqttClient?.unsubscribe(topic)
+    AsyncFunction("amqpConsume") { queue: String -> rabbitService.consume(queue) }
+
+    // MQTT Functions
+    AsyncFunction("mqttConnect") {
+            host: String,
+            port: Int,
+            clientId: String,
+            username: String?,
+            password: String? ->
+      mqttService.connect(host, port, clientId, username, password)
     }
 
-    AsyncFunction("publish") { topic: String, message: String ->
-      val mqttMessage = MqttMessage(message.toByteArray())
-      mqttClient?.publish(topic, mqttMessage)
+    AsyncFunction("mqttDisconnect") { mqttService.disconnect() }
+
+    AsyncFunction("mqttPublish") { topic: String, message: String ->
+      mqttService.publish(topic, message)
     }
+
+    AsyncFunction("mqttSubscribe") { topic: String -> mqttService.subscribe(topic) }
   }
 }

@@ -1,195 +1,187 @@
 import { useEvent } from 'expo';
-import ExpoMqtt, { ExpoAmqp } from 'expo-mqtt';
-import { useState, useEffect } from 'react';
-import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, TouchableOpacity } from 'react-native';
+import ExpoMqtt from 'expo-mqtt';
+import { ExchangeType } from '../src/ExpoMqtt.types';
+import React, { useState } from 'react';
+import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function App() {
-  const [mode, setMode] = useState<'MQTT' | 'AMQP'>('MQTT');
-  const [logs, setLogs] = useState<string[]>([]);
+  const [amqpUrl, setAmqpUrl] = useState('amqp://targino:((Po%t^Wjx@9pTxGUQ34@34.39.200.0:5672');
+  const [amqpExchange, setAmqpExchange] = useState('amq.direct');
+  const [amqpExchangeType, setAmqpExchangeType] = useState<ExchangeType>('direct');
+  const [amqpRoutingKey, setAmqpRoutingKey] = useState('app.debug');
+  const [amqpQueue, setAmqpQueue] = useState('debug.logs');
+  const [amqpMessage, setAmqpMessage] = useState('Hello RabbitMQ!');
 
-  // Common Config
-  const [brokerUrl, setBrokerUrl] = useState('tcp://34.39.200.0:5672');
-  const [username, setUsername] = useState('targino');
-  const [password, setPassword] = useState('targino@21608');
-
-  // MQTT State
-  const [mqttTopic, setMqttTopic] = useState('hsm_clinic_broadcast');
+  const [mqttHost, setMqttHost] = useState('34.39.200.0');
+  const [mqttPort, setMqttPort] = useState('1883');
+  const [mqttClientId, setMqttClientId] = useState('expo-client-' + Math.random().toString(16).substring(2, 8));
+  const [mqttUsername, setMqttUsername] = useState('targino');
+  const [mqttPassword, setMqttPassword] = useState('((Po%t^Wjx@9pTxGUQ34');
+  const [mqttTopic, setMqttTopic] = useState('amq.topic');
   const [mqttMessage, setMqttMessage] = useState('Hello MQTT!');
-  const [mqttConnected, setMqttConnected] = useState(false);
 
-  // AMQP State
-  const [amqpExchange, setAmqpExchange] = useState('');
-  const [amqpQueue, setAmqpQueue] = useState('hsm_clinic_broadcast');
-  const [amqpRoutingKey, setAmqpRoutingKey] = useState('');
-  const [amqpMessage, setAmqpMessage] = useState('Hello AMQP!');
-  const [amqpConnected, setAmqpConnected] = useState(false);
-
-  // MQTT Events
-  const onMqttConnect = useEvent(ExpoMqtt, 'onConnect');
-  const onMqttDisconnect = useEvent(ExpoMqtt, 'onDisconnect');
-  const onMqttMessage = useEvent(ExpoMqtt, 'onMessage');
-  const onMqttError = useEvent(ExpoMqtt, 'onError');
-
-  // AMQP Events
-  const onAmqpConnect = useEvent(ExpoAmqp, 'onAmqpConnect');
-  const onAmqpDisconnect = useEvent(ExpoAmqp, 'onAmqpDisconnect');
-  const onAmqpMessage = useEvent(ExpoAmqp, 'onAmqpMessage');
-  const onAmqpError = useEvent(ExpoAmqp, 'onAmqpError');
-
-  // --- Effect Hooks for Logging ---
-  useEffect(() => {
-    if (onMqttConnect?.success) { addLog('MQTT: Connected'); setMqttConnected(true); }
-  }, [onMqttConnect]);
-
-  useEffect(() => {
-    if (onMqttDisconnect) { addLog('MQTT: Disconnected'); setMqttConnected(false); }
-  }, [onMqttDisconnect]);
-
-  useEffect(() => {
-    if (onMqttMessage) addLog(`MQTT Rx [${onMqttMessage.topic}]: ${onMqttMessage.message}`);
-  }, [onMqttMessage]);
-
-  useEffect(() => {
-    if (onMqttError) addLog(`MQTT Error: ${onMqttError.error}`);
-  }, [onMqttError]);
-
-  useEffect(() => {
-    if (onAmqpConnect?.success) { addLog('AMQP: Connected'); setAmqpConnected(true); }
-  }, [onAmqpConnect]);
-
-  useEffect(() => {
-    if (onAmqpDisconnect) { addLog('AMQP: Disconnected'); setAmqpConnected(false); }
-  }, [onAmqpDisconnect]);
-
-  useEffect(() => {
-    if (onAmqpMessage) addLog(`AMQP Rx [${onAmqpMessage.queue}]: ${onAmqpMessage.message}`);
-  }, [onAmqpMessage]);
-
-  useEffect(() => {
-    if (onAmqpError) addLog(`AMQP Error: ${onAmqpError.error}`);
-  }, [onAmqpError]);
-
-  const addLog = (msg: string) => setLogs(prev => [msg, ...prev]);
-
-  // --- Actions ---
-
-  const handleMqttConnect = async () => {
-    try {
-      const options: any = { url: brokerUrl, username, password };
-      await ExpoMqtt.connect(options);
-    } catch (e: any) { addLog(`MQTT Connect Err: ${e.message}`); }
-  };
-
-  const handleAmqpConnect = async () => {
-    try {
-      // Just extract host/port from URL/String or whatever for simplicity in this demo,
-      // or let native module handle it. 
-      // For standard rabbitmq port is 5672 usually, but user is using 34.39.200.0
-      // We will assume the user puts the full AMQP connection string or we build it?
-      // Let's assume user puts a standard AMQP URI or we use the fields.
-      // For AMQP, standard port is 5672.
-      const host = brokerUrl.replace('tcp://', '').split(':')[0];
-      const options = {
-        host: host,
-        port: 5672, // Default AMQP port
-        username,
-        password
-      };
-      addLog(`AMQP Connecting to ${host}...`);
-      await ExpoAmqp.connect(options);
-    } catch (e: any) { addLog(`AMQP Connect Err: ${e.message}`); }
-  };
+  const amqpMsgPayload = useEvent(ExpoMqtt, 'onAmqpMessage');
+  const amqpStatusPayload = useEvent(ExpoMqtt, 'onAmqpStatus');
+  const mqttMsgPayload = useEvent(ExpoMqtt, 'onMqttMessage');
+  const mqttStatusPayload = useEvent(ExpoMqtt, 'onMqttStatus');
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.header}>Expo MQTT / AMQP</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.header}>Expo MQTT & AMQP</Text>
 
-        <View style={styles.tabs}>
-          <TouchableOpacity onPress={() => setMode('MQTT')} style={[styles.tab, mode === 'MQTT' && styles.activeTab]}>
-            <Text>MQTT</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setMode('AMQP')} style={[styles.tab, mode === 'AMQP' && styles.activeTab]}>
-            <Text>AMQP</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.group}>
-          <Text style={styles.label}>Broker Host / URL</Text>
-          <TextInput style={styles.input} value={brokerUrl} onChangeText={setBrokerUrl} autoCapitalize="none" />
-          <Text style={styles.label}>Username</Text>
-          <TextInput style={styles.input} value={username} onChangeText={setUsername} autoCapitalize="none" />
-          <Text style={styles.label}>Password</Text>
-          <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" />
-        </View>
-
-        {mode === 'MQTT' ? (
-          <View style={styles.group}>
-            <Text style={styles.label}>MQTT Actions</Text>
-            <View style={styles.row}>
-              <Button title="Connect" onPress={handleMqttConnect} disabled={mqttConnected} />
-              <Button title="Disconnect" onPress={() => ExpoMqtt.disconnect()} disabled={!mqttConnected} />
-            </View>
-            <Text style={styles.label}>Topic</Text>
-            <TextInput style={styles.input} value={mqttTopic} onChangeText={setMqttTopic} autoCapitalize="none" />
-            <View style={styles.row}>
-              <Button title="Subscribe" onPress={() => ExpoMqtt.subscribe(mqttTopic, 0)} disabled={!mqttConnected} />
-              <Button title="Unsubscribe" onPress={() => ExpoMqtt.unsubscribe(mqttTopic)} disabled={!mqttConnected} />
-            </View>
-            <Text style={styles.label}>Message</Text>
-            <TextInput style={styles.input} value={mqttMessage} onChangeText={setMqttMessage} />
-            <Button title="Publish" onPress={() => ExpoMqtt.publish(mqttTopic, mqttMessage)} disabled={!mqttConnected} />
+        <Group name="RabbitMQ (AMQP)">
+          <TextInput style={styles.input} placeholder="Broker URL" value={amqpUrl} onChangeText={setAmqpUrl} />
+          <View style={styles.row}>
+            <Button title="Connect" onPress={() => ExpoMqtt.amqpConnect(amqpUrl)} />
+            <Button title="Disconnect" onPress={() => ExpoMqtt.amqpDisconnect()} color="red" />
           </View>
-        ) : (
-          <View style={styles.group}>
-            <Text style={styles.label}>AMQP Actions</Text>
-            <View style={styles.row}>
-              <Button title="Connect" onPress={handleAmqpConnect} disabled={amqpConnected} />
-              <Button title="Disconnect" onPress={() => ExpoAmqp.disconnect()} disabled={!amqpConnected} />
-            </View>
+          <Text style={styles.status}>Status: {amqpStatusPayload?.status ?? 'Disconnected'}</Text>
 
-            <Text style={styles.label}>Exchange</Text>
-            <TextInput style={styles.input} value={amqpExchange} onChangeText={setAmqpExchange} autoCapitalize="none" />
-            <Button title="Declare Exchange" onPress={() => ExpoAmqp.exchangeDeclare(amqpExchange, 'direct', true)} disabled={!amqpConnected} />
-
-            <Text style={styles.label}>Queue</Text>
-            <TextInput style={styles.input} value={amqpQueue} onChangeText={setAmqpQueue} autoCapitalize="none" />
-            <Button title="Declare Queue" onPress={() => ExpoAmqp.queueDeclare(amqpQueue, true)} disabled={!amqpConnected} />
-
-            <Text style={styles.label}>Routing Key</Text>
-            <TextInput style={styles.input} value={amqpRoutingKey} onChangeText={setAmqpRoutingKey} autoCapitalize="none" />
-            <Button title="Bind Queue" onPress={() => ExpoAmqp.queueBind(amqpQueue, amqpExchange, amqpRoutingKey)} disabled={!amqpConnected} />
-
-            <Text style={styles.label}>Message</Text>
-            <TextInput style={styles.input} value={amqpMessage} onChangeText={setAmqpMessage} />
-            <Button title="Publish" onPress={() => ExpoAmqp.publish(amqpExchange, amqpRoutingKey, amqpMessage)} disabled={!amqpConnected} />
-
-            <Button title="Consume Queue" onPress={() => ExpoAmqp.consume(amqpQueue)} disabled={!amqpConnected} />
+          <TextInput style={styles.input} placeholder="Exchange Name" value={amqpExchange} onChangeText={setAmqpExchange} />
+          <View style={styles.row}>
+            {(['direct', 'fanout', 'topic', 'headers'] as ExchangeType[]).map((type) => (
+              <Button
+                key={type}
+                title={type}
+                color={amqpExchangeType === type ? '#007aff' : '#888'}
+                onPress={() => setAmqpExchangeType(type)}
+              />
+            ))}
           </View>
-        )}
+          <Button title="Declare Exchange" onPress={() => ExpoMqtt.amqpDeclareExchange(amqpExchange, amqpExchangeType)} />
 
-        <View style={styles.logs}>
-          <Text style={styles.label}>Logs</Text>
-          {logs.map((log, index) => (
-            <Text key={index} style={styles.logItem}>{log}</Text>
-          ))}
-        </View>
+          <View style={styles.separator} />
+
+          <TextInput style={styles.input} placeholder="Routing Key (blank = use Queue name)" value={amqpRoutingKey} onChangeText={setAmqpRoutingKey} />
+          <TextInput style={styles.input} placeholder="Message" value={amqpMessage} onChangeText={setAmqpMessage} />
+          <Button title="Publish Message" onPress={() => {
+            const rk = amqpRoutingKey || amqpQueue;
+            ExpoMqtt.amqpPublish(amqpExchange, rk, amqpMessage, amqpExchangeType);
+          }} />
+
+          <View style={styles.separator} />
+
+          <TextInput style={styles.input} placeholder="Queue to Consume" value={amqpQueue} onChangeText={setAmqpQueue} />
+          <Button title="Start Consuming" onPress={() => ExpoMqtt.amqpConsume(amqpQueue)} />
+          {amqpMsgPayload && (
+            <View style={styles.messageBox}>
+              <Text style={styles.messageLabel}>Last Received [{amqpMsgPayload.queue}]:</Text>
+              <Text>{amqpMsgPayload.message}</Text>
+            </View>
+          )}
+        </Group>
+
+        <Group name="MQTT (CocoaMQTT)">
+          <TextInput style={styles.input} placeholder="Broker Host" value={mqttHost} onChangeText={setMqttHost} />
+          <TextInput style={styles.input} placeholder="Port" value={mqttPort} onChangeText={setMqttPort} keyboardType="numeric" />
+          <TextInput style={styles.input} placeholder="Username (Optional)" value={mqttUsername} onChangeText={setMqttUsername} autoCapitalize="none" />
+          <TextInput style={styles.input} placeholder="Password (Optional)" value={mqttPassword} onChangeText={setMqttPassword} secureTextEntry autoCapitalize="none" />
+          <View style={styles.row}>
+            <Button title="Connect" onPress={() => ExpoMqtt.mqttConnect(mqttHost, parseInt(mqttPort) || 1883, mqttClientId, mqttUsername || undefined, mqttPassword || undefined)} />
+            <Button title="Disconnect" onPress={() => ExpoMqtt.mqttDisconnect()} color="red" />
+          </View>
+          <Text style={styles.status}>Status: {mqttStatusPayload?.status ?? 'Disconnected'}</Text>
+
+          <TextInput style={styles.input} placeholder="Topic" value={mqttTopic} onChangeText={setMqttTopic} />
+          <TextInput style={styles.input} placeholder="Message" value={mqttMessage} onChangeText={setMqttMessage} />
+          <Button title="Publish Message" onPress={() => ExpoMqtt.mqttPublish(mqttTopic, mqttMessage)} />
+
+          <View style={styles.separator} />
+
+          <Button title="Subscribe to Topic" onPress={() => ExpoMqtt.mqttSubscribe(mqttTopic)} />
+          {mqttMsgPayload && (
+            <View style={styles.messageBox}>
+              <Text style={styles.messageLabel}>Last Received [{mqttMsgPayload.topic}]:</Text>
+              <Text>{mqttMsgPayload.message}</Text>
+            </View>
+          )}
+        </Group>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+function Group(props: { name: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.group}>
+      <Text style={styles.groupHeader}>{props.name}</Text>
+      {props.children}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  scroll: { padding: 20 },
-  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  group: { backgroundColor: 'white', padding: 15, borderRadius: 10, marginBottom: 15, elevation: 2 },
-  label: { fontWeight: 'bold', marginBottom: 5, color: '#333' },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 5, padding: 10, marginBottom: 10, backgroundColor: '#fff' },
-  row: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 },
-  logs: { marginTop: 20, paddingBottom: 20 },
-  logItem: { paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#eee', fontSize: 12, fontFamily: 'monospace' },
-  tabs: { flexDirection: 'row', marginBottom: 15, justifyContent: 'center' },
-  tab: { padding: 10, borderWidth: 1, borderColor: '#ccc', flex: 1, alignItems: 'center', backgroundColor: '#eee' },
-  activeTab: { backgroundColor: 'white', borderColor: '#007AFF', borderBottomWidth: 2 }
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  header: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    margin: 20,
+    textAlign: 'center',
+    color: '#333',
+  },
+  group: {
+    margin: 15,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  groupHeader: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 15,
+    color: '#444',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    paddingBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: '#fafafa',
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 10,
+  },
+  status: {
+    textAlign: 'center',
+    marginVertical: 10,
+    fontStyle: 'italic',
+    color: '#666',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginVertical: 15,
+  },
+  messageBox: {
+    marginTop: 15,
+    padding: 12,
+    backgroundColor: '#e7f3ff',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#007aff',
+  },
+  messageLabel: {
+    fontWeight: 'bold',
+    fontSize: 12,
+    color: '#555',
+    marginBottom: 4,
+  },
 });

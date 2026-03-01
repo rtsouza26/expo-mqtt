@@ -15,12 +15,12 @@ Pod::Spec.new do |s|
     :tvos => '15.1'
   }
   s.swift_version  = '5.9'
-  s.source         = { git: 'https://github.com/rtsouza26/expo-mqtt' }
+  s.source         = { :git => 'https://github.com/rtsouza26/expo-mqtt' }
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
-  s.dependency 'CocoaMQTT'
   s.dependency 'RMQClient'
+  s.dependency 'CocoaMQTT'
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {

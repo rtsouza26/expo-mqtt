@@ -6,15 +6,12 @@
   ],
   "apple": {
     "modules": [
-      "ExpoMqttModule",
-      "ExpoAmqpModule"
+      "ExpoMqttModule"
     ]
   },
   "android": {
     "modules": [
-      "expo.modules.mqtt.ExpoMqttModule",
-      "expo.modules.mqtt.ExpoAmqpModule"
+      "expo.modules.mqtt.ExpoMqttModule"
     ]
-  },
-  "plugin": "./plugin/build/index.js"
+  }
 }

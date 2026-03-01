@@ -33,71 +33,34 @@ Run `npx pod-install` after installation.
 
 ## Usage
 
-### MQTT
+### Unified Client
 
 ```typescript
 import ExpoMqtt from 'expo-mqtt';
 
-// Connect to a broker
-await ExpoMqtt.connect({
-  url: 'tcp://broker.example.com:1883',
-  clientId: 'my-mobile-app',
-  username: 'user',
-  password: 'pass'
-});
+// MQTT usage
+await ExpoMqtt.mqttConnect('broker.hivemq.com', 1883, 'my-client-id');
+await ExpoMqtt.mqttPublish('expo/test', 'Hello MQTT!');
 
-// Subscribe to a topic
-await ExpoMqtt.subscribe('sensors/temperature', 1);
-
-// Listen for messages
-const subscription = ExpoMqtt.addListener('onMessage', (event) => {
-  console.log(`Received message on ${event.topic}: ${event.message}`);
-});
-
-// Publish a message
-await ExpoMqtt.publish('sensors/status', 'online');
-```
-
-### AMQP (RabbitMQ)
-
-```typescript
-import { ExpoAmqp } from 'expo-mqtt';
-
-// Connect to a server
-await ExpoAmqp.connect({
-  url: 'amqp://guest:guest@localhost:5672'
-});
-
-// Declare a queue and consume
-await ExpoAmqp.queueDeclare('logs-queue', true);
-await ExpoAmqp.consume('logs-queue');
-
-// Listen for messages
-const amqpSubscription = ExpoAmqp.addListener('onAmqpMessage', (event) => {
-  console.log(`Received AMQP message: ${event.message}`);
-});
-
-// Publish to an exchange
-await ExpoAmqp.publish('', 'logs-queue', JSON.stringify({ level: 'info', msg: 'Started' }));
+// AMQP usage
+await ExpoMqtt.amqpConnect('amqp://guest:guest@localhost:5672');
+await ExpoMqtt.amqpPublish('amq.direct', 'routing-key', 'Hello RMQ!');
 ```
 
 ## API Reference
 
-### MQTT Options
-| Prop | Type | Description |
-| :--- | :--- | :--- |
-| `url` | `string` | Connection URL (e.g., `tcp://...`) |
-| `clientId` | `string` | Unique client identifier |
-| `username` | `string` | Auth username |
-| `password` | `string` | Auth password |
+### MQTT Functions
+- `mqttConnect(host: string, port: number, clientId: string): Promise<void>`
+- `mqttDisconnect(): Promise<void>`
+- `mqttPublish(topic: string, message: string): Promise<void>`
+- `mqttSubscribe(topic: string): Promise<void>`
 
-### AMQP Options
-| Prop | Type | Description |
-| :--- | :--- | :--- |
-| `url` | `string` | Connection URL (e.g., `amqp://...`) |
-| `host` | `string` | Hostname |
-| `port` | `number` | Port |
-| `virtualHost` | `string` | VHost identifier |
+### AMQP Functions
+- `amqpConnect(url: string): Promise<void>`
+- `amqpDisconnect(): Promise<void>`
+- `amqpPublish(exchange: string, routingKey: string, message: string, type?: ExchangeType): Promise<void>`
+- `amqpDeclareExchange(name: string, type: ExchangeType): Promise<void>`
+- `amqpConsume(queue: string): Promise<void>`
 
 ## Contributing
 

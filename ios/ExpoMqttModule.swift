@@ -1,104 +1,72 @@
 import ExpoModulesCore
-import CocoaMQTT
 
-public class ExpoMqttModule: Module, CocoaMQTTDelegate {
-  private var mqtt: CocoaMQTT?
-  
+public class ExpoMqttModule: Module {
+  private let rabbitService = RabbitService()
+  private let mqttService = MqttService()
+
   public func definition() -> ModuleDefinition {
     Name("ExpoMqtt")
-    
-    Events("onConnect", "onDisconnect", "onMessage", "onError")
-    
-    AsyncFunction("connect") { (options: [String: Any]) in
-      guard let urlString = options["url"] as? String,
-            let url = URL(string: urlString),
-            let host = url.host,
-            let port = url.port else {
-        throw Exception(name: "InvalidURL", description: "Invalid URL provided. Must include host and port.")
+
+    Events("onAmqpMessage", "onMqttMessage", "onAmqpStatus", "onMqttStatus")
+
+    OnCreate {
+      self.rabbitService.onMessageReceived = { queue, message in
+        self.sendEvent("onAmqpMessage", [
+          "queue": queue,
+          "message": message
+        ])
       }
-      
-      let clientId = options["clientId"] as? String ?? "ExpoMqtt-\(UUID().uuidString)"
-      let mqtt = CocoaMQTT(clientID: clientId, host: host, port: UInt16(port))
-      
-      if let username = options["username"] as? String {
-          mqtt.username = username
+      self.rabbitService.onStatusChanged = { status in
+        self.sendEvent("onAmqpStatus", ["status": status])
       }
-      
-      if let password = options["password"] as? String {
-          mqtt.password = password
+
+      self.mqttService.onMessageReceived = { topic, message in
+        self.sendEvent("onMqttMessage", [
+          "topic": topic,
+          "message": message
+        ])
       }
-      
-      mqtt.keepAlive = 60
-      mqtt.delegate = self
-      
-      let success = mqtt.connect()
-      if success {
-          self.mqtt = mqtt
-      } else {
-          throw Exception(name: "ConnectFailed", description: "Failed to initiate connection")
+      self.mqttService.onStatusChanged = { status in
+        self.sendEvent("onMqttStatus", ["status": status])
       }
     }
-    
-    AsyncFunction("disconnect") {
-      self.mqtt?.disconnect()
-      // Event will be fired by delegate
+
+    // AMQP Functions
+    AsyncFunction("amqpConnect") { (url: String) in
+      self.rabbitService.connect(url: url)
     }
-    
-    AsyncFunction("subscribe") { (topic: String, qos: Int) in
-      self.mqtt?.subscribe(topic, qos: CocoaMQTTQoS(rawValue: UInt8(qos)) ?? .qos1)
+
+    AsyncFunction("amqpDisconnect") {
+      self.rabbitService.disconnect()
     }
-    
-    AsyncFunction("unsubscribe") { (topic: String) in
-      self.mqtt?.unsubscribe(topic)
+
+    AsyncFunction("amqpPublish") { (exchange: String, routingKey: String, message: String, type: String?) in
+      self.rabbitService.publish(exchangeName: exchange, routingKey: routingKey, message: message, type: type ?? "direct")
     }
-    
-    AsyncFunction("publish") { (topic: String, message: String) in
-      self.mqtt?.publish(topic, withString: message)
+
+    AsyncFunction("amqpDeclareExchange") { (name: String, type: String) in
+      self.rabbitService.declareExchange(name: name, type: type)
     }
-  }
-  
-  // MARK: - CocoaMQTTDelegate
-  
-  public func mqtt(_ mqtt: CocoaMQTT, didConnectAck ack: CocoaMQTTConnAck) {
-    if ack == .accept {
-      sendEvent("onConnect", ["success": true])
-    } else {
-      sendEvent("onError", ["error": "Connection failed with ack: \(ack)"])
+
+    AsyncFunction("amqpConsume") { (queue: String) in
+      self.rabbitService.consume(queueName: queue)
     }
-  }
-  
-  public func mqtt(_ mqtt: CocoaMQTT, didPublishMessage message: CocoaMQTTMessage, id: UInt16) {
-    // published
-  }
-  
-  public func mqtt(_ mqtt: CocoaMQTT, didPublishAck id: UInt16) {
-    // published ack
-  }
-  
-  public func mqtt(_ mqtt: CocoaMQTT, didReceiveMessage message: CocoaMQTTMessage, id: UInt16) {
-    sendEvent("onMessage", [
-      "topic": message.topic,
-      "message": message.string ?? ""
-    ])
-  }
-  
-  public func mqtt(_ mqtt: CocoaMQTT, didSubscribeTopics success: NSDictionary, failed: [String]) {
-    // subscribed
-  }
-  
-  public func mqtt(_ mqtt: CocoaMQTT, didUnsubscribeTopics topics: [String]) {
-    // unsubscribed
-  }
-  
-  public func mqttDidPing(_ mqtt: CocoaMQTT) {
-    // ping
-  }
-  
-  public func mqttDidReceivePong(_ mqtt: CocoaMQTT) {
-    // pong
-  }
-  
-  public func mqttDidDisconnect(_ mqtt: CocoaMQTT, withError err: Error?) {
-    sendEvent("onDisconnect", ["cause": err?.localizedDescription])
+
+    // MQTT Functions
+    AsyncFunction("mqttConnect") { (host: String, port: Int, clientId: String, username: String?, password: String?) in
+      self.mqttService.connect(host: host, port: UInt16(port), clientId: clientId, username: username, password: password)
+    }
+
+    AsyncFunction("mqttDisconnect") {
+      self.mqttService.disconnect()
+    }
+
+    AsyncFunction("mqttPublish") { (topic: String, message: String) in
+      self.mqttService.publish(topic: topic, message: message)
+    }
+
+    AsyncFunction("mqttSubscribe") { (topic: String) in
+      self.mqttService.subscribe(topic: topic)
+    }
   }
 }

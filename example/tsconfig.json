@@ -3,8 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "expo-mqtt": ["../src/index"],
-      "expo-mqtt/*": ["../src/*"]
+      "expo-amqp": ["../src/index"],
+      "expo-amqp/*": ["../src/*"]
     }
   }
 }

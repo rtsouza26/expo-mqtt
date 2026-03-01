@@ -47,7 +47,7 @@ await ExpoMqtt.mqttPublish('expo/test', 'Hello MQTT!');
 // AMQP usage (url, username?, password?)
 // Tip: Use a clean URL like 'amqp://localhost:5672' and pass credentials separately 
 // to avoid URI encoding issues with special characters.
-await ExpoMqtt.amqpConnect('amqp://34.39.200.0:5672', 'targino', '((Po%t^Wjx@... ');
+await ExpoMqtt.amqpConnect('amqp://192.168.1.1:5672', 'targino', 'password');
 await ExpoMqtt.amqpPublish('amq.direct', 'routing-key', 'Hello RMQ!');
 ```
 

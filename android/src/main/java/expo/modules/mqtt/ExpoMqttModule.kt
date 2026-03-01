@@ -29,7 +29,9 @@ class ExpoMqttModule : Module() {
     }
 
     // AMQP Functions
-    AsyncFunction("amqpConnect") { url: String -> rabbitService.connect(url) }
+    AsyncFunction("amqpConnect") { url: String, username: String?, password: String? ->
+      rabbitService.connect(url, username, password)
+    }
 
     AsyncFunction("amqpDisconnect") { rabbitService.disconnect() }
 

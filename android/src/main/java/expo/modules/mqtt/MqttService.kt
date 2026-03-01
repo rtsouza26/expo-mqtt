@@ -8,8 +8,8 @@ class MqttService {
     private var mqttClient: MqttAsyncClient? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    var onMessageReceived: ((String, String) -> Void)? = null
-    var onStatusChanged: ((String) -> Void)? = null
+    var onMessageReceived: ((String, String) -> Unit)? = null
+    var onStatusChanged: ((String) -> Unit)? = null
 
     fun connect(
             host: String,

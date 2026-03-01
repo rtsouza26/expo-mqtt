@@ -5,25 +5,28 @@ import React, { useState } from 'react';
 import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function App() {
-  const [amqpUrl, setAmqpUrl] = useState('amqp://targino:((Po%t^Wjx@9pTxGUQ34@34.39.200.0:5672');
-  const [amqpExchange, setAmqpExchange] = useState('amq.direct');
-  const [amqpExchangeType, setAmqpExchangeType] = useState<ExchangeType>('direct');
-  const [amqpRoutingKey, setAmqpRoutingKey] = useState('app.debug');
-  const [amqpQueue, setAmqpQueue] = useState('debug.logs');
-  const [amqpMessage, setAmqpMessage] = useState('Hello RabbitMQ!');
+  const [amqpUrl, setAmqpUrl] = useState('');
+  const [amqpUsername, setAmqpUsername] = useState('');
+  const [amqpPassword, setAmqpPassword] = useState('');
+  const [amqpExchange, setAmqpExchange] = useState('');
+  const [amqpExchangeType, setAmqpExchangeType] = useState<ExchangeType>('');
+  const [amqpRoutingKey, setAmqpRoutingKey] = useState('');
+  const [amqpQueue, setAmqpQueue] = useState('');
+  const [amqpMessage, setAmqpMessage] = useState('');
 
-  const [mqttHost, setMqttHost] = useState('34.39.200.0');
-  const [mqttPort, setMqttPort] = useState('1883');
+  const [mqttHost, setMqttHost] = useState('');
+  const [mqttPort, setMqttPort] = useState('');
   const [mqttClientId, setMqttClientId] = useState('expo-client-' + Math.random().toString(16).substring(2, 8));
-  const [mqttUsername, setMqttUsername] = useState('targino');
-  const [mqttPassword, setMqttPassword] = useState('((Po%t^Wjx@9pTxGUQ34');
-  const [mqttTopic, setMqttTopic] = useState('amq.topic');
-  const [mqttMessage, setMqttMessage] = useState('Hello MQTT!');
+  const [mqttUsername, setMqttUsername] = useState('');
+  const [mqttPassword, setMqttPassword] = useState('');
+  const [mqttTopic, setMqttTopic] = useState('');
+  const [mqttMessage, setMqttMessage] = useState('');
 
   const amqpMsgPayload = useEvent(ExpoMqtt, 'onAmqpMessage');
   const amqpStatusPayload = useEvent(ExpoMqtt, 'onAmqpStatus');
   const mqttMsgPayload = useEvent(ExpoMqtt, 'onMqttMessage');
   const mqttStatusPayload = useEvent(ExpoMqtt, 'onMqttStatus');
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -32,8 +35,10 @@ export default function App() {
 
         <Group name="RabbitMQ (AMQP)">
           <TextInput style={styles.input} placeholder="Broker URL" value={amqpUrl} onChangeText={setAmqpUrl} />
+          <TextInput style={styles.input} placeholder="Username (Optional)" value={amqpUsername} onChangeText={setAmqpUsername} autoCapitalize="none" />
+          <TextInput style={styles.input} placeholder="Password (Optional)" value={amqpPassword} onChangeText={setAmqpPassword} secureTextEntry autoCapitalize="none" />
           <View style={styles.row}>
-            <Button title="Connect" onPress={() => ExpoMqtt.amqpConnect(amqpUrl)} />
+            <Button title="Connect" onPress={() => ExpoMqtt.amqpConnect(amqpUrl, amqpUsername || undefined, amqpPassword || undefined)} />
             <Button title="Disconnect" onPress={() => ExpoMqtt.amqpDisconnect()} color="red" />
           </View>
           <Text style={styles.status}>Status: {amqpStatusPayload?.status ?? 'Disconnected'}</Text>

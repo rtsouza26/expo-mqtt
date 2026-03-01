@@ -8,12 +8,23 @@ class RabbitService: NSObject, RMQConnectionDelegate {
     var onMessageReceived: ((String, String) -> Void)?
     var onStatusChanged: ((String) -> Void)?
 
-    func connect(url: String) {
+    func connect(url: String, username: String? = nil, password: String? = nil) {
         onStatusChanged?("Connecting...")
         
-        // RMQConnection handles the URI parsing. 
-        // We use a delegate to catch errors during handshake.
-        connection = RMQConnection(uri: url, delegate: self)
+        var connectionUrl = url
+        if let user = username, let pass = password {
+            let encodedUser = user.addingPercentEncoding(withAllowedCharacters: .urlUserAllowed) ?? user
+            let encodedPass = pass.addingPercentEncoding(withAllowedCharacters: .urlPasswordAllowed) ?? pass
+            
+            // Assuming url starts with amqp:// or similar
+            if let schemeRange = url.range(of: "://") {
+                let scheme = url[..<schemeRange.lowerBound]
+                let rest = url[schemeRange.upperBound...]
+                connectionUrl = "\(scheme)://\(encodedUser):\(encodedPass)@\(rest)"
+            }
+        }
+        
+        connection = RMQConnection(uri: connectionUrl, delegate: self)
         connection?.start()
         
         // We attempt to create a channel. In RMQClient, this can be done immediately;

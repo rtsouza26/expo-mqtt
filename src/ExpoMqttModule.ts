@@ -3,7 +3,7 @@ import { ExchangeType } from './ExpoMqtt.types';
 
 interface ExpoMqttModule {
   // AMQP
-  amqpConnect(url: string): Promise<void>;
+  amqpConnect(url: string, username?: string, password?: string): Promise<void>;
   amqpDisconnect(): Promise<void>;
   amqpPublish(exchange: string, routingKey: string, message: string, type?: ExchangeType): Promise<void>;
   amqpDeclareExchange(name: string, type: ExchangeType): Promise<void>;

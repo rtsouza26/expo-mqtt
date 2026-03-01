@@ -1,5 +1,7 @@
 # expo-mqtt
 
+[![license](https://img.shields.io/github/license/rtsouza26/expo-mqtt.svg)](https://github.com/rtsouza26/expo-mqtt/blob/main/LICENSE)
+
 A high-performance MQTT and AMQP (RabbitMQ) client for Expo and React Native. This library provides a unified native interface for both protocols, optimized for modern mobile applications.
 
 ## Features
@@ -38,29 +40,51 @@ Run `npx pod-install` after installation.
 ```typescript
 import ExpoMqtt from 'expo-mqtt';
 
-// MQTT usage
-await ExpoMqtt.mqttConnect('broker.hivemq.com', 1883, 'my-client-id');
+// MQTT usage (host, port, clientId, username?, password?)
+await ExpoMqtt.mqttConnect('broker.hivemq.com', 1883, 'my-client-id', 'user', 'pass');
 await ExpoMqtt.mqttPublish('expo/test', 'Hello MQTT!');
 
-// AMQP usage
-await ExpoMqtt.amqpConnect('amqp://guest:guest@localhost:5672');
+// AMQP usage (url, username?, password?)
+// Tip: Use a clean URL like 'amqp://localhost:5672' and pass credentials separately 
+// to avoid URI encoding issues with special characters.
+await ExpoMqtt.amqpConnect('amqp://34.39.200.0:5672', 'targino', '((Po%t^Wjx@... ');
 await ExpoMqtt.amqpPublish('amq.direct', 'routing-key', 'Hello RMQ!');
 ```
 
 ## API Reference
 
 ### MQTT Functions
-- `mqttConnect(host: string, port: number, clientId: string): Promise<void>`
+- `mqttConnect(host: string, port: number, clientId: string, username?: string, password?: string): Promise<void>`
 - `mqttDisconnect(): Promise<void>`
 - `mqttPublish(topic: string, message: string): Promise<void>`
 - `mqttSubscribe(topic: string): Promise<void>`
 
 ### AMQP Functions
-- `amqpConnect(url: string): Promise<void>`
+- `amqpConnect(url: string, username?: string, password?: string): Promise<void>`
 - `amqpDisconnect(): Promise<void>`
 - `amqpPublish(exchange: string, routingKey: string, message: string, type?: ExchangeType): Promise<void>`
 - `amqpDeclareExchange(name: string, type: ExchangeType): Promise<void>`
 - `amqpConsume(queue: string): Promise<void>`
+
+### Types
+```typescript
+type ExchangeType = 'direct' | 'fanout' | 'topic' | 'headers';
+```
+
+## Development
+
+### Unit Tests
+The library includes a suite of unit tests using Jest.
+```bash
+npm run test
+```
+
+### Example App Cleanup
+To prevent sensitive credentials from being committed in the example app, we use a cleanup script:
+```bash
+node scripts/cleanup-example.js
+```
+*Note: A git pre-commit hook is automatically installed to run this script before every commit.*
 
 ## Contributing
 

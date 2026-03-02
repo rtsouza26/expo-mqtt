@@ -24,8 +24,8 @@ const MockedModule = requireNativeModule('ExpoMqtt');
 
 describe('ExpoMqttModule', () => {
     it('should call amqpConnect with correct arguments', async () => {
-        await ExpoMqttModule.amqpConnect('amqp://localhost', 'user', 'pass');
-        expect(MockedModule.amqpConnect).toHaveBeenCalledWith('amqp://localhost', 'user', 'pass');
+        await ExpoMqttModule.amqpConnect('amqp://localhost', 'user', 'pass', 10);
+        expect(MockedModule.amqpConnect).toHaveBeenCalledWith('amqp://localhost', 'user', 'pass', 10);
     });
 
     it('should call amqpDisconnect', async () => {

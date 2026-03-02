@@ -8,7 +8,7 @@ class RabbitService: NSObject, RMQConnectionDelegate {
     var onMessageReceived: ((String, String) -> Void)?
     var onStatusChanged: ((String) -> Void)?
 
-    func connect(url: String, username: String? = nil, password: String? = nil) {
+    func connect(url: String, username: String? = nil, password: String? = nil, heartbeat: Int = 60) {
         onStatusChanged?("Connecting...")
         
         var connectionUrl = url
@@ -24,7 +24,24 @@ class RabbitService: NSObject, RMQConnectionDelegate {
             }
         }
         
-        connection = RMQConnection(uri: connectionUrl, delegate: self)
+        // Using a more comprehensive initializer to support heartbeat configuration
+        connection = RMQConnection(
+            uri: connectionUrl,
+            userProvidedConnectionName: "expo-mqtt",
+            channelMax: 2047,
+            frameMax: 131072,
+            heartbeat: NSNumber(value: heartbeat),
+            connectTimeout: 30,
+            readTimeout: 55,
+            writeTimeout: 55,
+            syncTimeout: 15,
+            delegate: self,
+            delegateQueue: DispatchQueue.global(qos: .default),
+            recoverAfter: 4,
+            recoveryAttempts: NSNumber(value: Int.max),
+            recoverFromConnectionClose: true
+        )
+        
         connection?.start()
         
         // We attempt to create a channel. In RMQClient, this can be done immediately;
